@@ -80,19 +80,30 @@ def main():
         sys.exit(1)
 
     try:
+        # Menambahkan timeout eksplisit (5 menit) dan max_retries
         client = OpenAI(
             base_url="https://ai.geraikita.com/v1",
-            api_key=api_key
+            api_key=api_key,
+            timeout=300.0,
+            max_retries=3
         )
         
+        # Mengaktifkan Streaming mode agar koneksi tidak idle saat model berpikir
         response = client.chat.completions.create(
             model=args.model,
             messages=[{"role": "user", "content": prompt_text}],
+            stream=True
         )
         
-        print(response.choices[0].message.content)
+        for chunk in response:
+            if chunk.choices and len(chunk.choices) > 0:
+                content = chunk.choices[0].delta.content
+                if content:
+                    sys.stdout.write(content)
+                    sys.stdout.flush()
+        print() # Newline at the end
     except Exception as e:
-        print(f"Error querying API: {e}", file=sys.stderr)
+        print(f"\nError querying API: {e}", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":
