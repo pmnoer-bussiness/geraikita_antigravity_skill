@@ -38,7 +38,8 @@ def main():
     parser = argparse.ArgumentParser(description="Query Geraikita AI models")
     parser.add_argument("--list-models", action="store_true", help="List available models")
     parser.add_argument("--model", type=str, help="The exact model name to use")
-    parser.add_argument("--prompt", type=str, help="The prompt to send to the model (optional if piped via stdin)")
+    parser.add_argument("--prompt", type=str, help="The prompt to send to the model (optional if piped via stdin or --file is used)")
+    parser.add_argument("--file", type=str, help="Path to a text file containing the prompt")
 
     args = parser.parse_args()
 
@@ -51,13 +52,22 @@ def main():
         sys.exit(1)
 
     prompt_text = args.prompt
-    if not prompt_text:
-        # Read from stdin if --prompt is not provided
+    if args.file:
+        try:
+            with open(args.file, 'r', encoding='utf-8') as f:
+                prompt_text = f.read().strip()
+            # Otomatis menghapus file setelah dibaca
+            os.remove(args.file)
+        except Exception as e:
+            print(f"Error reading or deleting file {args.file}: {e}", file=sys.stderr)
+            sys.exit(1)
+    elif not prompt_text:
+        # Read from stdin if --prompt or --file is not provided
         if not sys.stdin.isatty():
             prompt_text = sys.stdin.read().strip()
 
     if not prompt_text:
-        print("Error: No prompt provided. Use --prompt or pipe text via stdin.", file=sys.stderr)
+        print("Error: No prompt provided. Use --prompt, --file, or pipe text via stdin.", file=sys.stderr)
         sys.exit(1)
 
     if args.model not in AVAILABLE_MODELS:

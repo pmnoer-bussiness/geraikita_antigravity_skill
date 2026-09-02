@@ -46,7 +46,15 @@ uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --prompt "I
 ```
 
 **Untuk prompt panjang / multi-baris / kode / error log:**
-Gunakan fitur `stdin` via pipa (`|`) atau Here-Strings PowerShell agar terhindar dari eror *parsing* atau batas karakter.
+Anda dapat menggunakan fitur file sementara (*scratch file*) yang paling aman dari batas karakter PowerShell.
+1. Buat file `.txt` atau `.md` sementara (misal di folder `scratch/`).
+2. Panggil skrip dengan argumen `--file`:
+```powershell
+uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --file "path/to/temp.txt"
+```
+*(Catatan: Skrip Python akan secara otomatis menghapus file sementara tersebut setelah berhasil dibaca).*
+
+Atau alternatifnya (jika tidak menggunakan file), Anda bisa menggunakan fitur `stdin` via Here-Strings PowerShell:
 ```powershell
 @"
 Isi prompt yang sangat panjang
