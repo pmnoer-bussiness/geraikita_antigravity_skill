@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(description="Query Geraikita AI models")
     parser.add_argument("--list-models", action="store_true", help="List available models")
     parser.add_argument("--model", type=str, help="The exact model name to use")
-    parser.add_argument("--prompt", type=str, help="The prompt to send to the model")
+    parser.add_argument("--prompt", type=str, help="The prompt to send to the model (optional if piped via stdin)")
 
     args = parser.parse_args()
 
@@ -46,8 +46,18 @@ def main():
         list_models()
         return
 
-    if not args.model or not args.prompt:
+    if not args.model:
         parser.print_help()
+        sys.exit(1)
+
+    prompt_text = args.prompt
+    if not prompt_text:
+        # Read from stdin if --prompt is not provided
+        if not sys.stdin.isatty():
+            prompt_text = sys.stdin.read().strip()
+
+    if not prompt_text:
+        print("Error: No prompt provided. Use --prompt or pipe text via stdin.", file=sys.stderr)
         sys.exit(1)
 
     if args.model not in AVAILABLE_MODELS:
@@ -67,7 +77,7 @@ def main():
         
         response = client.chat.completions.create(
             model=args.model,
-            messages=[{"role": "user", "content": args.prompt}],
+            messages=[{"role": "user", "content": prompt_text}],
         )
         
         print(response.choices[0].message.content)

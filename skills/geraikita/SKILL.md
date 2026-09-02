@@ -37,10 +37,21 @@ Berikut adalah *exact model names* yang wajib Anda gunakan sebagai argumen `--mo
 
 ## Cara Menggunakan (Execution)
 
-Gunakan perintah `run_command` pada PowerShell untuk mengeksekusi skrip Python ini. Anda bertugas merangkai *prompt* yang baik berdasarkan permintaan pengguna, lalu memanggil skrip:
+Gunakan perintah `run_command` pada PowerShell untuk mengeksekusi skrip Python ini.
 
+**Untuk prompt pendek (1 baris):**
+Pastikan Anda memformat prompt menjadi **single line** (satu baris lurus tanpa *newline/enter*) agar tidak memicu eror sintaks PowerShell.
 ```powershell
-uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --prompt "ISI_PROMPT_ANDA"
+uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --prompt "ISI PROMPT PENDEK DALAM SATU BARIS"
+```
+
+**Untuk prompt panjang / multi-baris / kode / error log:**
+Gunakan fitur `stdin` via pipa (`|`) atau Here-Strings PowerShell agar terhindar dari eror *parsing* atau batas karakter.
+```powershell
+@"
+Isi prompt yang sangat panjang
+bisa terdiri dari banyak baris
+"@ | uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK"
 ```
 
 Jika Anda ingin melihat daftar lengkap model secara *live*:
