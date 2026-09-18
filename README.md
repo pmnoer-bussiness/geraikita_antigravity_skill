@@ -11,10 +11,10 @@ Dengan skill ini, Antigravity dapat mendelegasikan tugas atau meminta bantuan (o
 Antigravity juga dapat diperankan sebagai Orkestrator dalam memanage multiple agent dengan LLM yang berbeda (mirip /teamwork-preview, namun menggunakan external LLM Model).
 
 Contoh prompting:
-"Tolong buatkan website dinamis untuk profile perusahaan PT. Wadidaw. Gunakan /geraikita dengan ketentuan berikut:
+"_Tolong buatkan website dinamis untuk profile perusahaan PT. Wadidaw. Gunakan /geraikita dengan ketentuan berikut:
 1. Opus-5-Thinking untuk perencanaa.
 2. Deepseek 4 Pro untuk coding.
-3. Sonnet-5-Thinking untuk mengaudit kode."
+3. Sonnet-5-Thinking untuk mengaudit kode._"
 
 ## 🚀 Cara Instalasi
 
