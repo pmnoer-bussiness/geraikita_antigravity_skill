@@ -8,14 +8,6 @@ Dengan skill ini, Antigravity dapat mendelegasikan tugas atau meminta bantuan (o
 - GPT-4o (Luna/Sol/Terra)
 - Qwen, GLM, dan Kimi
 
-Antigravity juga dapat diperankan sebagai Orkestrator dalam memanage multiple agent dengan LLM yang berbeda (mirip /teamwork-preview, namun menggunakan external LLM Model).
-
-Contoh prompting:
-"_Tolong buatkan website dinamis untuk profile perusahaan PT. Wadidaw. Gunakan /geraikita dengan ketentuan berikut:
-1. Opus-5-Thinking untuk perencanaa.
-2. Deepseek 4 Pro untuk coding.
-3. Sonnet-5-Thinking untuk mengaudit kode._"
-
 ## 🚀 Cara Instalasi
 
 1. **Clone ke dalam proyek Anda:**
