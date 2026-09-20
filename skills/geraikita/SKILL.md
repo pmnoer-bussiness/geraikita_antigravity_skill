@@ -52,7 +52,13 @@ Anda dapat menggunakan fitur file sementara (*scratch file*) yang paling aman da
 ```powershell
 uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --file "path/to/temp.txt"
 ```
-*(Catatan: Skrip Python akan secara otomatis menghapus file sementara tersebut setelah berhasil dibaca).*
+*(Catatan: Skrip Python akan secara otomatis menghapus file sementara tersebut setelah berhasil dieksekusi).*
+
+**Menyimpan output langsung ke file (UTF-8):**
+Gunakan `--output-file` untuk menyimpan output langsung ke file tanpa risiko charmap konsol:
+```powershell
+uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --file "path/to/temp.txt" --output-file "path/to/output.md"
+```
 
 Atau alternatifnya (jika tidak menggunakan file), Anda bisa menggunakan fitur `stdin` via Here-Strings PowerShell:
 ```powershell
