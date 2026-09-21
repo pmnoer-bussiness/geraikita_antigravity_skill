@@ -46,6 +46,8 @@ def main():
     parser.add_argument("--prompt", type=str, help="The prompt to send to the model (optional if piped via stdin or --file is used)")
     parser.add_argument("--file", type=str, help="Path to a text file containing the prompt")
     parser.add_argument("--output-file", type=str, help="Optional path to save full response directly to a file in UTF-8")
+    parser.add_argument("--no-stream", action="store_true", help="Disable streaming for faster round-trip on short prompts")
+    parser.add_argument("--progress-interval", type=int, default=300, help="Interval in seconds for logging progress heartbeat when writing to --output-file (default: 300s = 5m)")
 
     args = parser.parse_args()
 
@@ -105,22 +107,55 @@ def main():
 
     for attempt in range(1, max_retries + 1):
         try:
-            response = client.chat.completions.create(
-                model=args.model,
-                messages=[{"role": "user", "content": prompt_text}],
-                stream=True
-            )
-            
-            for chunk in response:
-                if chunk.choices and len(chunk.choices) > 0:
-                    content = chunk.choices[0].delta.content
-                    if content:
-                        sys.stdout.write(content)
-                        sys.stdout.flush()
-                        if out_file_handle:
-                            out_file_handle.write(content)
-                            out_file_handle.flush()
-            print() # Newline at the end
+            if args.no_stream:
+                response = client.chat.completions.create(
+                    model=args.model,
+                    messages=[{"role": "user", "content": prompt_text}],
+                    stream=False
+                )
+                content = response.choices[0].message.content or ""
+                sys.stdout.write(content)
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+                if out_file_handle:
+                    out_file_handle.write(content)
+                    out_file_handle.flush()
+            else:
+                response = client.chat.completions.create(
+                    model=args.model,
+                    messages=[{"role": "user", "content": prompt_text}],
+                    stream=True
+                )
+                
+                start_time = time.time()
+                last_progress_time = start_time
+                total_chars = 0
+                total_bytes = 0
+
+                for chunk in response:
+                    if chunk.choices and len(chunk.choices) > 0:
+                        content = chunk.choices[0].delta.content
+                        if content:
+                            sys.stdout.write(content)
+                            sys.stdout.flush()
+                            total_chars += len(content)
+                            total_bytes += len(content.encode('utf-8', errors='replace'))
+
+                            if out_file_handle:
+                                out_file_handle.write(content)
+                                out_file_handle.flush()
+
+                            now = time.time()
+                            if (now - last_progress_time) >= args.progress_interval:
+                                last_progress_time = now
+                                elapsed_min = int((now - start_time) / 60)
+                                dest = args.output_file if args.output_file else "stdout"
+                                sys.stderr.write(
+                                    f"\n[GERAIKITA PROGRESS] {elapsed_min}m elapsed | Written {total_chars:,} chars ({total_bytes / 1024:.1f} KB) to {dest}...\n"
+                                )
+                                sys.stderr.flush()
+                print() # Newline at the end
+
             success = True
             break
         except (APIConnectionError, APITimeoutError, InternalServerError, ConnectionResetError, Exception) as e:

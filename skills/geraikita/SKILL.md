@@ -39,36 +39,66 @@ Berikut adalah *exact model names* yang wajib Anda gunakan sebagai argumen `--mo
 
 Gunakan perintah `run_command` pada PowerShell untuk mengeksekusi skrip Python ini.
 
-**Untuk prompt pendek (1 baris):**
-Pastikan Anda memformat prompt menjadi **single line** (satu baris lurus tanpa *newline/enter*) agar tidak memicu eror sintaks PowerShell.
+Skrip mendukung fallback lokasi otomatis:
+- Workspace: `.agents/scripts/geraikita_query.py`
+- Global: `C:\Users\user\.gemini\config\scripts\geraikita_query.py`
+
+### Panduan 3 Kategori Prompt & Aturan Eksekusi:
+
+Agen **WAJIB** mengklasifikasikan prompt ke dalam 3 kategori sebelum memanggil skrip:
+
+---
+
+### Kategori 1: Prompt Pendek (< 100 kata / < 500 karakter)
+Digunakan untuk pertanyaan cepat, definisi singkat, atau instruksi ringkas 1 baris.
+* **Mode Streaming:** Gunakan `--no-stream` agar latensi round-trip lebih instan.
+* **Format Prompt:** Gunakan argumen `--prompt "ISI PROMPT SINGLE LINE"` (satu baris tanpa enter).
+* **Output:** Cukup ke stdout konsol (tidak wajib `--output-file`).
 ```powershell
-uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --prompt "ISI PROMPT PENDEK DALAM SATU BARIS"
+uv run .agents/scripts/geraikita_query.py --model "claude-sonnet-5" --prompt "Jelaskan ringkas apa itu Stellar Soroban." --no-stream
 ```
 
-**Untuk prompt panjang / multi-baris / kode / error log:**
-Anda dapat menggunakan fitur file sementara (*scratch file*) yang paling aman dari batas karakter PowerShell.
-1. Buat file `.txt` atau `.md` sementara (misal di folder `scratch/`).
-2. Panggil skrip dengan argumen `--file`:
-```powershell
-uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --file "path/to/temp.txt"
-```
-*(Catatan: Skrip Python akan secara otomatis menghapus file sementara tersebut setelah berhasil dieksekusi).*
+---
 
-**Menyimpan output langsung ke file (UTF-8):**
-Gunakan `--output-file` untuk menyimpan output langsung ke file tanpa risiko charmap konsol:
+### Kategori 2: Prompt Menengah (100–500 kata / 500–2.500 karakter)
+Digunakan untuk analisis modular, review fungsi tunggal, atau penjelasan teknis multi-paragraf.
+* **Mode Streaming:** Wajib `stream=True` (default tanpa `--no-stream`).
+* **Sistem Buffer Input:** Tulis prompt ke file sementara di folder `scratch/`, oper via `--file`.
+* **Output:** **SELALU TERAPKAN `--output-file`** untuk menyimpan hasil lengkap dalam UTF-8 tanpa terpotong batas konsol.
 ```powershell
-uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK" --file "path/to/temp.txt" --output-file "path/to/output.md"
+# 1. Tulis prompt ke scratch buffer
+# 2. Eksekusi dengan --file dan --output-file:
+uv run .agents/scripts/geraikita_query.py --model "claude-sonnet-5" --file "scratch/prompt_mid.txt" --output-file "scratch/output_mid.md"
+```
+*(Catatan: File prompt `scratch/prompt_mid.txt` otomatis dihapus oleh skrip saat eksekusi berhasil).*
+
+---
+
+### Kategori 3: Prompt Panjang (> 500 kata / > 2.500 karakter / Audit Kode Penuh)
+Digunakan untuk audit keamanan menyeluruh, refactoring arsitektur besar, atau input teks/log yang sangat masif.
+* **Mode Streaming:** Wajib `stream=True` (default).
+* **Sistem Buffer Input:** Wajib via scratch file buffer (`--file "scratch/prompt_large.txt"`).
+* **Output:** **SELALU TERAPKAN `--output-file`**.
+* **Pengawasan 2 Lapis (Wajib Setiap 5 Menit):**
+  1. **Lapis 1 (Internal Skrip Python):**
+     Skrip secara otomatis mencetak log detak jantung (*heartbeat*) ke `stderr` setiap 5 menit (300 detik) yang melaporkan jumlah karakter dan ukuran byte yang sudah tertulis ke file output:
+     `[GERAIKITA PROGRESS] 5m elapsed | Written 24,500 chars (24.2 KB) to scratch/audit_output.md...`
+  2. **Lapis 2 (Eksternal Asisten Agen):**
+     - Agen mengeksekusi perintah menggunakan `run_command`. Karena memakan waktu beberapa menit, perintah akan otomatis berjalan di latar belakang (*background task*).
+     - Agen **WAJIB** menjadwalkan pengecekan panjang file output secara berkala setiap 5 menit (misal menggunakan tool `schedule` atau memeriksa `(Get-Item <output_file>).Length`).
+     - Jika ukuran file bertambah $\to$ proses generasi berjalan sehat dan lancar.
+     - Jika ukuran file tidak bertambah sama sekali selama > 10 menit $\to$ deteksi potensi koneksi terputus dan tangani segera.
+
+Contoh Eksekusi Prompt Panjang:
+```powershell
+uv run .agents/scripts/geraikita_query.py --model "claude-opus-5" --file "scratch/audit_prompt.txt" --output-file "scratch/audit_report.md" --progress-interval 300
 ```
 
-Atau alternatifnya (jika tidak menggunakan file), Anda bisa menggunakan fitur `stdin` via Here-Strings PowerShell:
-```powershell
-@"
-Isi prompt yang sangat panjang
-bisa terdiri dari banyak baris
-"@ | uv run .agents/scripts/geraikita_query.py --model "NAMA_MODEL_EKSAK"
-```
+---
 
-Jika Anda ingin melihat daftar lengkap model secara *live*:
+### Utilitas Tambahan
+Melihat daftar lengkap model secara *live*:
 ```powershell
 uv run .agents/scripts/geraikita_query.py --list-models
 ```
+
